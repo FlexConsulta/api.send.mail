@@ -1,0 +1,19 @@
+{
+  "name": "app.send.mail",
+  "version": "1.0.0",
+  "description": "app para envio de email",
+  "main": "server.js",
+  "repository": "git@github.com:FlexConsulta/api.send.mail.git",
+  "author": "Anael Medeiros",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "handlebars": "^4.7.7",
+    "nodemailer": "^6.9.2",
+    "nodemon": "^2.0.22"
+  },
+  "scripts": {
+    "start": "nodemon --es-module-specifier-resolution=node ./index.js"
+  }
+}
