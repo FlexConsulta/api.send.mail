@@ -1,0 +1,65 @@
+name: Deploy production
+on:
+    pull_request:
+        types:
+            - closed
+        branches:
+            - 'main'
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "pypy3.9"
+      - name: Generate OVPN file
+        env:
+          SECRET_VALUE: ${{ secrets.FILE_OVPN }}
+        run: |
+          echo "$SECRET_VALUE" > ./client.ovpn
+          echo "OVPN file generate with success"
+      - name: Install OpenVPN
+        run: |
+          sudo apt update
+          sudo apt install -y openvpn openvpn-systemd-resolved
+      - name: Connect to VPN
+        uses: "kota65535/github-openvpn-connect-action@v2"
+        with:
+          config_file: ./client.ovpn
+          username: ${{ secrets.VPN_USERNAME }}
+          password: ${{ secrets.VPN_PASSWORD }}
+      - name: Copy Files
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ secrets.SSH_SERVER }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 21
+          local-dir: "./"
+          server-dir: "./app.send.email/"
+          exclude: |
+            client.ovpn
+            openvpn.log
+            openvpn.pid
+            yarn.lock
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+          git-ftp-args: "--changed-only"
+      - name: Install Yarn
+        run: npm install -g yarn
+      - name: Install Dependencies
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_SERVER }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            cd ~/app.send.email/
+            yarn
+          
